@@ -70,12 +70,12 @@ module MainApp
       
       new_contents
     rescue => e
-      STDERR.puts "File on stack: #{realpath}"
+      STDERR.puts "File on stack: #{realpath} (#{file})"
       raise e
     end
     
     def fix_encoding(string)
-      if RUBY_PLATFORM =~ /win32/
+      if RUBY_PLATFORM =~ /win32|mingw32/
         s = string.encode(FS_ENCODING)
         s = yield(s) if block_given?
         s.encode(LOCALE_ENCODING)
