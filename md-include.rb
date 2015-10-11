@@ -70,7 +70,7 @@ module MainApp
       
       new_contents
     rescue => e
-      STDERR.puts "File on stack: #{realpath} (#{file})"
+      STDERR.puts(realpath ? "File on stack: #{realpath} (#{file})" : "File not found: \"#{file}\"")
       raise e
     end
     
