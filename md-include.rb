@@ -38,12 +38,22 @@ module MainApp
     end
     
     def parse_file(file)
+      # Увы, проблемы с кодировками в Windows могут проявиться при использовании многих функций Ruby
+      func_stage = :start
+      
       realpath = fix_encoding(file) { |filename| File.realpath(filename, @config_dir) }
+      func_stage = :read_realpath
+      
       raise "Recursion: include #{file}" if @all_parsed_files.include?(realpath)
+      func_stage = :check_recursion
+      
       @all_parsed_files << realpath
       directory_path = File.dirname(realpath)
+      func_stage = :directory_path
+      
       contents = File.read(realpath)
       new_contents = []
+      func_stage = :read_file
       
       contents.each_line do |line|
         matches = line.match(RE_INCLUDE)
@@ -52,14 +62,17 @@ module MainApp
           relative_name = with_quotes ? with_quotes[1] : matches[1]
           if relative_name.size > 0
             include_file = directory_path+'/'+relative_name.encode(LOCALE_ENCODING)
+            func_stage = :before_include
+            
             # empty strings should separate texts
             new_contents << "\n"
             new_contents << "\n"
             new_contents += if @target_files.include?(include_file)
-              File.read(include_file).split(/\r?\n/)
-            else
-              parse_file(include_file)
-            end
+                              File.read(include_file).split(/\r?\n/)
+                            else
+                              parse_file(include_file)
+                            end
+            func_stage = :after_include
           else
             raise "Empty #include in #{realpath}"
           end
@@ -68,9 +81,12 @@ module MainApp
         end
       end
       
+      func_stage = :read_contents
+      @all_parsed_files.delete(realpath)
       new_contents
     rescue => e
-      STDERR.puts(realpath ? "File on stack: #{realpath} (#{file})" : "File not found: \"#{file}\"")
+      STDERR.puts(realpath ? "File on stack: #{realpath}" : "File not found: \"#{file}\"")
+      STDERR.puts func_stage.to_s
       raise e
     end
     
