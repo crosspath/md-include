@@ -35,3 +35,7 @@ Run MdInclude to create combined files (replace *directory* with your actual dir
     ruby md-include.rb directory
 
 If a file (`main.md`) includes another file (`included.md`) that has been parsed during work of this script it will use parsed version (`_included.md`).
+
+## Test
+
+Install dependencies with `bundle install` and run `bundle exec rspec`.
